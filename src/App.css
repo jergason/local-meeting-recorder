@@ -1,0 +1,466 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #0f0f0f;
+  background-color: #f6f6f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0 0 20px 0;
+  font-weight: 600;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: 1rem;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #888;
+}
+
+.indicator.recording {
+  background-color: #ff3b30;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.controls {
+  margin-bottom: 24px;
+}
+
+button {
+  border-radius: 8px;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.start-btn {
+  background-color: #34c759;
+  color: white;
+}
+
+.start-btn:hover {
+  background-color: #2db550;
+}
+
+.stop-btn {
+  background-color: #ff3b30;
+  color: white;
+}
+
+.stop-btn:hover {
+  background-color: #e63529;
+}
+
+.last-recording {
+  text-align: center;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.last-recording p {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.last-recording code {
+  font-size: 0.75rem;
+  word-break: break-all;
+  color: #333;
+}
+
+/* Setup Wizard */
+.setup-wizard {
+  padding: 20px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.setup-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.setup-step h1,
+.setup-step h2 {
+  margin: 0 0 12px 0;
+}
+
+.setup-step p {
+  margin: 0 0 16px 0;
+  color: #666;
+}
+
+.setup-step .info {
+  font-size: 0.875rem;
+  padding: 12px;
+  background-color: rgba(0, 122, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.model-options {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.model-option:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.model-option input[type="radio"] {
+  margin: 0;
+}
+
+.model-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.model-name {
+  font-weight: 500;
+}
+
+.model-size {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.progress-container {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #007aff;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.primary-btn {
+  background-color: #007aff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #ff3b30;
+  font-size: 0.875rem;
+  margin-bottom: 16px;
+}
+
+/* Transcription display */
+.transcription {
+  width: 100%;
+  text-align: left;
+  margin-top: 16px;
+}
+
+.transcription h3 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.segments {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+}
+
+.segment {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.segment:last-child {
+  margin-bottom: 0;
+}
+
+.segment .speaker {
+  font-weight: 600;
+  margin-right: 6px;
+  font-size: 0.75rem;
+}
+
+.segment .speaker.me {
+  color: #34c759;
+}
+
+.segment .speaker.meeting {
+  color: #007aff;
+}
+
+.segment .timestamp {
+  font-size: 0.75rem;
+  color: #888;
+  margin-right: 8px;
+  font-family: monospace;
+}
+
+.segment .text {
+  font-size: 0.875rem;
+}
+
+/* Summary display */
+.summary {
+  width: 100%;
+  text-align: left;
+  margin-top: 16px;
+  padding: 12px;
+  background-color: rgba(0, 122, 255, 0.05);
+  border-radius: 8px;
+}
+
+.summary h3 {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.summary h4 {
+  margin: 12px 0 6px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.summary-text {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.key-points,
+.action-items {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.875rem;
+}
+
+.key-points li,
+.action-items li {
+  margin-bottom: 4px;
+}
+
+.secondary-btn {
+  background-color: #e0e0e0;
+  color: #333;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background-color: #d0d0d0;
+}
+
+.secondary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Recording elapsed time */
+.elapsed-time {
+  font-family: monospace;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ff3b30;
+  margin-left: 8px;
+}
+
+/* Warning toast for long recordings */
+.warning-toast {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ff9500;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateX(-50%) translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #f6f6f6;
+    background-color: #1c1c1e;
+  }
+
+  .last-recording {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .last-recording p {
+    color: #999;
+  }
+
+  .last-recording code {
+    color: #ddd;
+  }
+
+  .setup-step p {
+    color: #999;
+  }
+
+  .setup-step .info {
+    background-color: rgba(0, 122, 255, 0.2);
+  }
+
+  .model-option {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .model-option:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .progress-bar {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .progress-text {
+    color: #999;
+  }
+
+  .segments {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .segment .timestamp {
+    color: #666;
+  }
+
+  .segment .speaker.me {
+    color: #30d158;
+  }
+
+  .segment .speaker.meeting {
+    color: #0a84ff;
+  }
+
+  .summary {
+    background-color: rgba(0, 122, 255, 0.1);
+  }
+
+  .summary h4 {
+    color: #999;
+  }
+
+  .secondary-btn {
+    background-color: #3a3a3c;
+    color: #f6f6f6;
+  }
+
+  .secondary-btn:hover:not(:disabled) {
+    background-color: #4a4a4c;
+  }
+
+  .elapsed-time {
+    color: #ff453a;
+  }
+}
