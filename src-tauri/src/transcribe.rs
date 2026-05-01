@@ -482,4 +482,134 @@ mod tests {
         let output = resample(&input, 48000, 16000);
         assert!(output.is_empty());
     }
+
+    #[test]
+    fn test_resample_downsample_length() {
+        // 48000 → 16000 should produce ~1/3 the samples
+        let input: Vec<f32> = (0..48000).map(|i| (i as f32 / 100.0).sin()).collect();
+        let output = resample(&input, 48000, 16000);
+        // Allow ±1 sample for ceiling math
+        assert!(output.len() >= 15999 && output.len() <= 16001, "got {}", output.len());
+    }
+
+    /// Helper: write a sine-wave WAV file to /tmp and return the path
+    fn write_test_wav(
+        path: &Path,
+        sample_rate: u32,
+        channels: u16,
+        duration_s: f32,
+        freq_hz: f32,
+    ) -> Result<(), String> {
+        let spec = hound::WavSpec {
+            channels,
+            sample_rate,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut writer = hound::WavWriter::create(path, spec).map_err(|e| e.to_string())?;
+        let n_frames = (sample_rate as f32 * duration_s) as usize;
+        for i in 0..n_frames {
+            let t = i as f32 / sample_rate as f32;
+            let amp = (2.0 * std::f32::consts::PI * freq_hz * t).sin();
+            let sample_i16 = (amp * i16::MAX as f32 * 0.3) as i16;
+            for _ in 0..channels {
+                writer.write_sample(sample_i16).map_err(|e| e.to_string())?;
+            }
+        }
+        writer.finalize().map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_load_audio_resamples_to_16khz() {
+        let path = std::env::temp_dir().join("transcribe_test_48k.wav");
+        write_test_wav(&path, 48000, 1, 1.0, 440.0).unwrap();
+
+        let samples = load_audio_for_whisper(&path).unwrap();
+
+        // 1 second of audio at 16kHz = ~16000 samples
+        assert!(samples.len() >= 15990 && samples.len() <= 16010, "got {}", samples.len());
+        // Should not be silent
+        let max_abs = samples.iter().map(|s| s.abs()).fold(0.0_f32, f32::max);
+        assert!(max_abs > 0.1, "audio too quiet: max_abs={}", max_abs);
+    }
+
+    #[test]
+    fn test_load_audio_stereo_collapses_to_mono() {
+        let path = std::env::temp_dir().join("transcribe_test_stereo.wav");
+        write_test_wav(&path, 16000, 2, 0.5, 440.0).unwrap();
+
+        let samples = load_audio_for_whisper(&path).unwrap();
+
+        // 0.5s at 16kHz mono = 8000 samples (no resample needed)
+        assert!(samples.len() >= 7990 && samples.len() <= 8010, "got {}", samples.len());
+    }
+
+    #[test]
+    fn test_load_audio_native_16khz_no_resample() {
+        let path = std::env::temp_dir().join("transcribe_test_16k.wav");
+        write_test_wav(&path, 16000, 1, 0.25, 440.0).unwrap();
+
+        let samples = load_audio_for_whisper(&path).unwrap();
+
+        assert_eq!(samples.len(), 4000); // exactly 0.25s * 16000
+    }
+
+    /// E2E: run the full transcription pipeline against a real recording.
+    ///
+    /// Selects the recording dir via `TEST_RECORDING_DIR` env var, or falls back to the
+    /// most recent dir under `~/Documents/MeetingRecordings/`. Skips with a printed
+    /// message if neither is available. Requires whisper model to be configured.
+    ///
+    /// Run with:  cargo test --package tauri-app -- --ignored transcribe_recording_dir_e2e --nocapture
+    #[test]
+    #[ignore]
+    fn test_transcribe_recording_dir_e2e() {
+        let dir = std::env::var("TEST_RECORDING_DIR")
+            .ok()
+            .map(std::path::PathBuf::from)
+            .or_else(latest_recording_dir);
+
+        let dir = match dir {
+            Some(d) => d,
+            None => {
+                println!("SKIP: no recording dir found (set TEST_RECORDING_DIR or record one)");
+                return;
+            }
+        };
+
+        println!("Transcribing: {:?}", dir);
+        let result = transcribe_recording_dir(&dir).expect("transcription succeeded");
+
+        println!(
+            "Got {} segments, full_text={} chars, duration={:.2}s",
+            result.segments.len(),
+            result.full_text.len(),
+            result.duration
+        );
+        for (i, seg) in result.segments.iter().enumerate() {
+            println!(
+                "  [{}] {:.2}-{:.2}s [{}] {}",
+                i, seg.start_time, seg.end_time, seg.speaker, seg.text
+            );
+        }
+
+        // Basic invariants — even if audio is mostly silence, the call shouldn't crash.
+        assert!(result.duration >= 0.0);
+        for seg in &result.segments {
+            assert!(seg.end_time >= seg.start_time, "segment has end < start");
+            assert!(!seg.id.is_empty());
+            assert!(seg.speaker == "Me" || seg.speaker == "Meeting");
+        }
+    }
+
+    fn latest_recording_dir() -> Option<std::path::PathBuf> {
+        let docs = dirs::document_dir()?.join("MeetingRecordings");
+        let entries = std::fs::read_dir(&docs).ok()?;
+        entries
+            .filter_map(|e| e.ok())
+            .filter(|e| e.file_type().map(|t| t.is_dir()).unwrap_or(false))
+            .max_by_key(|e| e.file_name())
+            .map(|e| e.path())
+    }
 }

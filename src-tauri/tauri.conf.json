@@ -55,9 +55,17 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "externalBin": ["binaries/ollama"],
     "macOS": {
       "minimumSystemVersion": "12.3"
     }
   },
-  "plugins": {}
+  "plugins": {
+    "shell": {
+      "sidecar": true,
+      "scope": [
+        { "name": "binaries/ollama", "sidecar": true, "args": ["serve"] }
+      ]
+    }
+  }
 }

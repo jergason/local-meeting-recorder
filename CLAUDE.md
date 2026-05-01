@@ -13,7 +13,15 @@ pnpm lint:fix             # eslint + prettier
 pnpm typecheck            # tsc --noEmit
 ```
 
-Set `DEV_MODELS=1` env var to use 1KB dummy model files instead of real 2GB+ models during development.
+Set `DEV_MODELS=1` to use 1KB dummy whisper model files during development.
+
+LLM summarization runs against Ollama at `localhost:11434`. The bundled sidecar binary must be present at `src-tauri/binaries/ollama-{target-triple}` — populate via `./scripts/fetch-ollama.sh` (copies the binary out of `/Applications/Ollama.app`). At least one chat model must be pulled (`ollama pull qwen3.5:latest`) and named in `config.json`'s `llm_model` field.
+
+Tests:
+```bash
+cargo test --manifest-path src-tauri/Cargo.toml --lib                       # fast unit tests
+cargo test --manifest-path src-tauri/Cargo.toml --lib -- --ignored --nocapture  # slow e2e (real models)
+```
 
 ## Architecture
 
@@ -36,12 +44,12 @@ All CPU-heavy operations (transcription, summarization) use `tokio::task::spawn_
 
 ### Backend Modules (src-tauri/src/)
 
-- **lib.rs**: Tauri command handlers, AppState with Mutex-wrapped recorder/config
+- **lib.rs**: Tauri command handlers, AppState with Mutex-wrapped recorder/config. Spawns `ollama serve` as a Tauri sidecar at startup (`tauri-plugin-shell`). If a system Ollama already binds 11434, the spawned child exits and the existing server handles requests.
 - **audio.rs**: AudioRecorder - captures system audio (SCStream) + mic (CPAL) → WAV files
-- **transcribe.rs**: whisper-rs wrapper, processes system.wav ("Meeting" speaker) + mic.wav ("Me" speaker), merges by timestamp
-- **summarize.rs**: llama-cpp-2 wrapper, builds prompt, parses markdown sections into SummaryResult
-- **config.rs**: AppConfig stored at `~/.local/share/meeting-recorder/config.json`, tracks model paths
-- **download.rs**: model downloading with progress events
+- **transcribe.rs**: whisper-rs wrapper, processes system.wav ("Meeting" speaker) + mic.wav ("Me" speaker), merges by timestamp. Whisper inference runs on a `std::thread::Builder` with a 64MB stack — tokio's blocking pool default (2MB) is too small for whisper's encoder and will SIGSEGV.
+- **summarize.rs**: HTTP client for Ollama at `localhost:11434/api/chat`. Ollama applies the model's chat template based on its Modelfile, so we just send role-tagged messages. `AppConfig.llm_model` is an Ollama tag (e.g. `qwen3.5:latest`), not a filename.
+- **config.rs**: AppConfig stored at `~/.local/share/meeting-recorder/config.json`. `whisper_model` is still a filename (whisper-rs loads from disk); `llm_model` is now an Ollama tag.
+- **download.rs**: whisper model downloading with progress events. LLM models are pulled by Ollama (`ollama pull <tag>`) — not handled here.
 
 ### Frontend Components (src/)
 
@@ -62,7 +70,7 @@ Transcribe: system.wav → "Meeting" segments
             mic.wav → "Me" segments
             merge by start_time → TranscriptionResult
 
-Summarize: transcript → LLM prompt → parse ## Summary, ## Key Points, ## Action Items
+Summarize: transcript → POST localhost:11434/api/chat → parse ## Summary, ## Key Points, ## Action Items
 ```
 
 ### Windows
@@ -97,6 +105,8 @@ interface SummaryResult {
 
 ## Gotchas
 
-- Models must be GGUF format (ggml-*.bin for Whisper, *.gguf for Llama)
+- Whisper models are GGUF format (`ggml-*.bin`) loaded directly; LLM is whatever Ollama has pulled (`ollama pull qwen3.5:latest`).
 - Audio filenames hardcoded in transcribe.rs (system.wav, mic.wav)
 - App checks `needs_setup()` on launch—setup wizard must complete before main UI shows
+- The bundled Ollama sidecar lives at `src-tauri/binaries/ollama-{aarch64,x86_64}-apple-darwin`. Not checked in (gitignored); populate locally via `./scripts/fetch-ollama.sh`. Without it, `pnpm tauri dev` and bundle builds will fail.
+- Whisper inference must NOT run on `tokio::task::spawn_blocking` — its 2MB stack overflows. Use `std::thread::Builder::new().stack_size(64 * 1024 * 1024)` and bridge with a `tokio::sync::oneshot` channel.

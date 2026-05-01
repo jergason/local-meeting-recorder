@@ -144,12 +144,16 @@ async fn transcribe_recording(app: AppHandle, recording_dir: String) -> Result<T
         }
     });
 
-    tokio::task::spawn_blocking(move || {
-        let path = std::path::Path::new(&recording_dir);
-        transcribe::transcribe_recording_dir_with_progress(path, Some(tx))
-    })
-    .await
-    .map_err(|e| format!("Task failed: {}", e))?
+    let (result_tx, result_rx) = tokio::sync::oneshot::channel();
+    std::thread::Builder::new()
+        .stack_size(64 * 1024 * 1024)
+        .spawn(move || {
+            let path = std::path::Path::new(&recording_dir);
+            let result = transcribe::transcribe_recording_dir_with_progress(path, Some(tx));
+            let _ = result_tx.send(result);
+        })
+        .map_err(|e| format!("Spawn failed: {}", e))?;
+    result_rx.await.map_err(|e| format!("Task failed: {}", e))?
 }
 
 // === Summarization Commands ===
@@ -240,6 +244,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_positioner::init())
+        .plugin(tauri_plugin_shell::init())
         .manage(AppState {
             recorder: Mutex::new(AudioRecorder::new()),
             recordings_dir: dirs::document_dir()
@@ -252,6 +257,31 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             {
                 app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            }
+
+            // Spawn bundled `ollama serve` as a sidecar so summarization works
+            // out of the box. If a system Ollama is already serving on 11434,
+            // this child will fail to bind and exit — that's fine, the existing
+            // server handles requests.
+            {
+                use tauri_plugin_shell::ShellExt;
+                let sidecar = app.shell().sidecar("ollama")?.args(["serve"]);
+                let (mut rx, _child) = sidecar.spawn()?;
+                tauri::async_runtime::spawn(async move {
+                    use tauri_plugin_shell::process::CommandEvent;
+                    while let Some(event) = rx.recv().await {
+                        match event {
+                            CommandEvent::Stdout(line) | CommandEvent::Stderr(line) => {
+                                println!("[ollama] {}", String::from_utf8_lossy(&line).trim_end());
+                            }
+                            CommandEvent::Terminated(payload) => {
+                                println!("[ollama] terminated: {:?}", payload);
+                                break;
+                            }
+                            _ => {}
+                        }
+                    }
+                });
             }
 
             // Build tray menu

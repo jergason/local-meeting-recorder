@@ -70,14 +70,6 @@ impl AppConfig {
             .map(|name| Self::models_dir().join(name))
             .filter(|p| p.exists())
     }
-
-    /// Get LLM model path if downloaded
-    pub fn llm_model_path(&self) -> Option<PathBuf> {
-        self.llm_model
-            .as_ref()
-            .map(|name| Self::models_dir().join(name))
-            .filter(|p| p.exists())
-    }
 }
 
 /// Model info for downloads
@@ -153,18 +145,18 @@ impl ModelInfo {
 
         vec![
             Self {
-                id: "qwen3-1.7b".to_string(),
-                name: "Qwen 3 1.7B (Recommended)".to_string(),
-                size_bytes: 1_730_000_000, // ~1.73GB
-                url: "https://huggingface.co/Qwen/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q8_0.gguf".to_string(),
-                filename: "Qwen3-1.7B-Q8_0.gguf".to_string(),
+                id: "qwen3.5-4b".to_string(),
+                name: "Qwen 3.5 4B (Fast)".to_string(),
+                size_bytes: 3_500_000_000, // ~3.5GB
+                url: "https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q6_K.gguf".to_string(),
+                filename: "Qwen3.5-4B-Q6_K.gguf".to_string(),
             },
             Self {
-                id: "qwen3-4b".to_string(),
-                name: "Qwen 3 4B (More accurate)".to_string(),
-                size_bytes: 4_300_000_000, // ~4.3GB
-                url: "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q8_0.gguf".to_string(),
-                filename: "Qwen3-4B-Q8_0.gguf".to_string(),
+                id: "gemma4-26b-a4b".to_string(),
+                name: "Gemma 4 26B-A4B (Recommended, MoE)".to_string(),
+                size_bytes: 17_000_000_000, // ~17GB
+                url: "https://huggingface.co/bartowski/google_gemma-4-26B-A4B-it-GGUF/resolve/main/google_gemma-4-26B-A4B-it-Q4_K_M.gguf".to_string(),
+                filename: "google_gemma-4-26B-A4B-it-Q4_K_M.gguf".to_string(),
             },
         ]
     }

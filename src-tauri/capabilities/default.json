@@ -7,6 +7,11 @@
     "core:default",
     "notification:default",
     "opener:default",
-    "positioner:default"
+    "positioner:default",
+    "shell:allow-execute",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [{ "name": "binaries/ollama", "sidecar": true, "args": ["serve"] }]
+    }
   ]
 }

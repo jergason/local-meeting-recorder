@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-.claude/settings.local.json
+.claude/
 
 node_modules
 dist
@@ -30,6 +30,9 @@ src-tauri/target/
 # Model files (large binaries)
 *.gguf
 *.bin
+
+# Bundled Ollama sidecar binaries — populated by scripts/fetch-ollama.sh
+src-tauri/binaries/
 
 # Environment files
 .env*

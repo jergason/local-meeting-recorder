@@ -22,6 +22,7 @@ tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
 tauri-plugin-notification = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-positioner = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
@@ -35,12 +36,11 @@ chrono = "0.4"
 dirs = "5"
 
 # Model downloads (Phase 1.5)
-reqwest = { version = "0.12", features = ["stream"] }
+reqwest = { version = "0.12", features = ["stream", "json"] }
 futures-util = "0.3"
 
 # Transcription (Phase 3)
 whisper-rs = "0.12"
 
-# Summarization (Phase 5)
-mistralrs = { git = "https://github.com/EricLBuehler/mistral.rs.git", tag = "v0.6.0", features = ["metal"] }
+# Summarization (Phase 5) — local LLM via Ollama HTTP API at localhost:11434
 
